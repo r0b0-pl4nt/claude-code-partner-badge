@@ -1,0 +1,128 @@
+Development containers & sandboxed execution
+LESSON 4 OF 5 · INSTALLATION AND ENVIRONMENTS
+Isolation has layers. Know which one applies.
+When a client's IT security team asks what Claude Code can access, the answer depends on which isolation boundary is in place. This lesson covers the isolation options, what each one covers, and how to configure them, so you can answer security questionnaires accurately, not optimistically.
+
+The security case
+Isolation has layers. "It's sandboxed" is not a complete security answer.
+On enterprise engagements, the question of what Claude Code can access (and what it can't) will come up in the security review. The correct answer is not "sandboxed"; it's "depends on which isolation layer is in place."
+
+Claude Code offers multiple isolation options, each covering different access surfaces. The built-in Bash sandbox restricts Bash subprocesses and child processes, but it does not restrict Claude Code's built-in file tools, MCP servers, hooks, or web access. Those surfaces require additional isolation: a sandbox runtime, a dev container, or a VM. When IT asks "what can Claude Code access?", the honest answer is: "depends on the isolation boundary we configure." That's what this lesson covers.
+
+Access Surface	Built-in Bash Sandbox	Sandbox Runtime	Container / VM
+Bash commands	✓ Restricted	✓ Restricted	✓ Restricted
+File tools (Read/Write)	✗ Full access	✓ Restricted	✓ Restricted
+MCP servers	✗ Full access	✗ Full access	✓ Restricted
+Hooks	✗ Full access	✗ Full access	✓ Restricted
+Web access	✗ Full access	✓ Restricted	✓ Restricted
+For IT security reviews, specify which isolation boundary is in use, not just "sandbox."
+
+The controls
+Four properties of Claude Code's sandboxing model
+Each of these is a talking point in a security questionnaire conversation, and a configuration decision before deployment.
+
+01
+Directory scoping
+Claude Code can be restricted to specific directories. It cannot read or write outside the defined scope. For a developer working in a project directory, this means Claude Code stays inside the project. It cannot access the developer's home directory, other codebases, or system files unless explicitly permitted.
+02
+Network allowlisting
+Outbound network requests from Claude Code can be constrained to a defined allowlist of hosts. Attempts to reach endpoints outside the allowlist are blocked. This is particularly relevant in regulated industries where data exfiltration controls are part of the security posture.
+03
+Approval-free operation within bounds
+Operations inside the defined sandbox proceed without interrupting the developer for confirmation. This preserves the productivity benefit: developers aren't approving every file read or every shell command, while the scope of autonomous action stays explicitly bounded.
+04
+Out-of-sandbox notification
+When Claude Code attempts an operation outside the sandbox boundary, it surfaces the attempt rather than silently failing or silently escalating. The developer sees what was attempted and can decide whether to expand the sandbox or redirect the approach. This is the transparency property: it's what makes the boundary meaningful rather than opaque.
+Configuration
+Sandbox configuration lives in settings.json: three field groups to know
+Sandbox controls are configured declaratively. A minimal working example covers most enterprise requirements in under 20 lines.
+
+Sandbox configuration for Claude Code is managed through settings.json, either at the user level (~/.claude/settings.json) or deployed via managed settings for a team. Three field groups do the work: sandbox (process isolation and filesystem bounds), permissions (tool-level allow/deny rules), and network (outbound domain allowlisting). Here's a minimal configuration that covers a typical enterprise hardening requirement:
+
+{
+  "sandbox": {
+    "enabled": true,
+    "filesystem": {
+      "denyRead": ["/"],
+      "allowRead": ["/project", "~/.claude"],
+      "allowWrite": ["/project"]
+    },
+    "network": {
+      "allowedDomains": [
+        "api.anthropic.com",
+        "*.client-internal.com"
+      ]
+    }
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm run test *)",
+      "Bash(npm run lint)",
+      "Read(/project/**)"
+    ],
+    "deny": [
+      "Bash(curl *)",
+      "Read(./.env)",
+      "Read(~/.ssh/**)"
+    ],
+    "defaultMode": "acceptEdits"
+  }
+}
+Key fields to know for the security questionnaire conversation:
+
+sandbox.filesystem.denyRead / allowRead
+Sets the directory boundary. Deny the root, then re-allow the project directory. This is what lets you tell the security team "it can't read SSH keys" rather than "it probably won't."
+sandbox.network.allowedDomains
+Outbound domain allowlist. Wildcards are supported (*.client-internal.com). Set this to enforce egress policy rather than relying on firewall rules alone.
+permissions.deny
+Tool-level deny rules. Block specific bash patterns (curl *) or file access (Read(./.env)). These rules cannot be overridden by local config when deployed in managed settings.
+permissions.defaultMode
+Default permission mode on launch. Options: default, acceptEdits, plan, auto. Use acceptEdits for teams that want edits to auto-approve while still confirming bash commands.
+Dev containers
+Running Claude Code inside a container adds an outer boundary to the inner one
+A dev container is the natural complement to sandbox configuration for enterprise clients who want reproducible, isolated developer environments.
+
+When Claude Code runs inside a dev container, the container itself provides a second layer of isolation. The file system, network, and process scope are all bounded by the container definition before Claude Code's own sandbox controls apply. For client security teams, this is a strong answer to questions about isolation: both the tool and the environment are constrained. Anthropic provides an official dev container feature that handles the Claude Code install automatically.
+
+devcontainer.json: Claude Code feature
+{
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  }
+}
+The feature version pins the install script, not the Claude Code release. Claude Code auto-updates inside containers by default unless auto-update is disabled via DISABLE_AUTOUPDATER. For environments with pinned version policies, set this variable explicitly. Full devcontainer documentation is at code.claude.com/docs/en/devcontainer.
+
+Engagement scenario
+The security questionnaire question
+You're on a call with the client's IT security lead, walking through the Claude Code deployment plan.
+
+Decision · Scenario
+The security lead asks: "Could a developer accidentally configure Claude Code to read files outside their project directory, say their SSH keys or credentials in their home folder?" What do you tell them?
+A · No; Claude Code only reads files in the active tab
+Claude Code is limited to what's open in the IDE, so it can't access other parts of the file system.
+B · With explicit deny rules configured, no; we verify that before deployment
+Deny rules for sensitive paths are set in permissions config, the Bash sandbox restricts shell commands, and the configuration is tested before rollout. Active configuration, not default behaviour, is what closes the security questionnaire.
+C · Yes, unless the developer runs it with restricted permissions
+File access is unrestricted by default and needs to be manually locked down via OS-level permissions.
+B is directionally correct, but the framing matters for a security team. "By default no" is not a safe answer for a security questionnaire; it implies passive safety. Security teams need active configuration. The right answer for a security lead is: "We configure explicit deny rules for sensitive paths like ~/.ssh/**, enable the Bash sandbox to restrict shell commands, and verify these rules before deployment. Access is governed by active configuration, not default behaviour." That's the shift from "it probably won't" to "we enforce and test that it can't." Note also that the built-in Bash sandbox covers bash commands; file tool access to SSH keys requires an explicit permissions.deny rule or a broader isolation layer (container/VM). Confirm which layer is in use before claiming the boundary.
+ 
+Course artifact · Lesson 4 contribution
+Installation Configuration Pack
+Settings section
+This lesson contributes the settings section of the Installation Configuration Pack — sandbox scoping, network controls, and the authentication method the client's environment requires.
+
+1.
+Document the sandbox configuration: filesystem scope, permitted network domains, and any denied tools. One config block per deployment environment — dev, staging, and production may differ.
+2.
+Record the authentication method in use — OAuth, API key, or SSO via SAML/SCIM — and any proxy configuration. The IT team will ask for this before approving the rollout.
+3.
+Note which isolation layer applies: Bash sandbox, sandbox runtime, or container/VM. The choice shapes both the config syntax and the security questionnaire answers.
+Lesson 4 of 5 complete
+The security conversation is ready. Now automate it.
+ 
+You can specify which isolation boundary is in place, configure sandbox controls, frame the security questionnaire conversation accurately, and build a dev container spec using the official Anthropic devcontainer feature.
+
+Up Next · Lesson 5
+Headless and non-interactive mode for scripted and CI use
+Once a client team has Claude Code running interactively, the next question is always the same: can we put this in the pipeline? Lesson 2.5 is where that conversation starts.
