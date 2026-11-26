@@ -1,0 +1,137 @@
+Terminal patterns and shell setup
+LESSON 3 OF 5 · INSTALLATION AND ENVIRONMENTS
+The habits that make Claude Code stick.
+By the end of this lesson you'll know which terminal patterns to demonstrate on Day 1, which ones to teach in week two, and how to feed real data into Claude Code via the shell. This pattern bridges interactive use and the CI pipelines in Lesson 2.5.
+
+Before first use
+The authentication variable that most silently blocks a first run
+The authentication method for a client deployment depends on architecture. Confirm it before the first developer session, not during it.
+
+Authentication methods
+
+Interactive developers on a Team or Enterprise plan typically authenticate via browser-based subscription login. API keys are the standard for CI, headless, and automated workflows. Cloud-provider routing (Bedrock, Vertex AI) is a third path for clients who deploy through AWS or GCP. When an API key is used, it goes in the developer's shell profile (~/.zshrc or ~/.bashrc on most client machines) or, for headless and CI environments, in a secrets store (covered in Lesson 2.5). When set, ANTHROPIC_API_KEY overrides subscription login.
+
+When enabling multiple developers at once, confirm key distribution with IT in advance. Walking into an enablement session without knowing whether keys have been provisioned costs time that doesn't come back.
+
+Environment variables
+
+Many environment variables govern authentication, network routing, governance, and runtime behaviour. You don't need to teach all of them on Day 1. When a deployment silently blocks authentication or network traffic, you'll know where to look. Six of the most scenario-relevant ones are below.
+
+Activity · Select all that apply
+A client's development team is setting up Claude Code. Their network routes external traffic through a corporate HTTPS proxy, uses TLS inspection, and has a policy requiring pinned software versions. Before the first developer authenticates, which environment variables need to be configured?
+ANTHROPIC_API_KEY
+AUTHENTICATION
+
+HTTPS_PROXY
+NETWORK
+
+NODE_EXTRA_CA_CERTS
+NETWORK
+
+DISABLE_AUTOUPDATER
+GOVERNANCE
+
+CLAUDE_CODE_USE_BEDROCK
+DEPLOYMENT
+
+CLAUDE_CODE_MAX_TURNS
+BEHAVIOR
+Check my selections
+Four of the six. Authentication, proxy routing, TLS certificates, and auto-update governance are all pre-session setup. Bedrock routing is deployment path-specific. Only relevant if this client runs through AWS. Turn limits come later, once developers are active and you need cost controls.
+Reference: key environment variables
+
+Variable	Category	What it does
+ANTHROPIC_API_KEY	Auth	API key for authentication. Optional for interactive use when subscription login is available. Required for headless, CI, or API-key-only deployments. When set, overrides subscription login.
+ANTHROPIC_AUTH_TOKEN	Auth	Custom bearer token for the Authorization header. Often used with gateways, managed auth, or externally provisioned credentials. Takes precedence over ANTHROPIC_API_KEY.
+ANTHROPIC_BASE_URL	Deployment	Redirect Claude API traffic to an LLM gateway or corporate proxy. Points at your gateway's Anthropic-format endpoint.
+CLAUDE_CODE_USE_BEDROCK	Deployment	Route model traffic through Amazon Bedrock instead of the Anthropic API. Set to 1 to enable.
+CLAUDE_CODE_USE_VERTEX	Deployment	Route model traffic through Google Vertex AI. Requires ANTHROPIC_VERTEX_PROJECT_ID and CLOUD_ML_REGION.
+ANTHROPIC_BEDROCK_BASE_URL	Deployment	Override the Bedrock endpoint. Typically used to route Bedrock traffic through an LLM gateway.
+HTTPS_PROXY / HTTP_PROXY	Network	Corporate proxy server URL. Use HTTPS_PROXY first; fall back to HTTP_PROXY if unavailable. Credentials can be embedded in the URL.
+NO_PROXY	Network	Comma-separated or space-separated list of hosts to bypass the proxy. Set to * to bypass for all requests.
+NODE_EXTRA_CA_CERTS	Network	Path to a custom CA certificate file. Required when the corporate network uses a CA not in the OS trust store (e.g. a self-signed TLS inspection cert).
+CLAUDE_CODE_CERT_STORE	Network	Controls which CA certificate store Claude Code trusts. Values: bundled,system (default), bundled, or system.
+CLAUDE_CODE_CLIENT_CERT	Network	Path to a client certificate for mTLS authentication. Pair with CLAUDE_CODE_CLIENT_KEY.
+DISABLE_TELEMETRY	Governance	Disables telemetry reporting. Use in environments where outbound telemetry traffic is restricted by policy.
+CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC	Governance	Suppresses non-essential outbound traffic (telemetry, changelog fetches, etc.). Useful for air-gapped or restricted-egress environments.
+DISABLE_AUTOUPDATER	Governance	Prevents Claude Code from auto-updating. Appropriate when the client manages software versions centrally or needs to pin a specific version for stability.
+CLAUDE_CODE_MAX_TURNS	Behavior	Maximum number of agentic turns before Claude Code stops and asks for confirmation. Useful for cost control during a pilot. Works alongside permission settings.
+The full reference list is at code.claude.com/docs/en/env-vars.
+
+Working in the terminal
+Four categories of shortcuts: teach them in this order
+Not all shortcuts are equal. Some change the interaction model; some are housekeeping. Sequence matters when you're enabling a client team who is already overloaded on Day 1.
+
+Bash mode
+! prefix
+Runs a shell command directly. The command output is shown to Claude Code, so you can reference it in the next prompt. Faster than asking Claude to run a known command. Teach this first. It's the shortcut that changes how developers think about the tool.
+Context management
+/clear  /compact  /context
+/clear resets the conversation (not the files). /compact condenses context to save space without losing the thread. /context visualises how much context window is in use.
+
+Recommended teaching sequence: Introduce these in week two, after developers have hit a context limit and asked why the model seems to be forgetting things.
+Navigation
+Esc  Esc Esc  Shift+Tab
+Esc cancels the current action mid-run. Esc Esc opens a rewind menu — Fork conversation, Rewind code, or Fork + Rewind — when the input is empty. If the input contains text, Esc Esc clears the draft instead. Shift+Tab cycles through three execution modes:
+default: standard behaviour
+auto-accept edits: applies changes without prompting
+plan: presents proposed changes and waits for approval before executing
+Plan mode is the one that matters for enterprise clients with strict code review requirements.
+File context and session
+@  --continue  /model
+@ adds a file or folder to context by path. --continue (or -c) resumes the most recent conversation when starting a new Claude Code session from the shell; --resume <session-id> resumes a specific one. These are CLI flags, not slash commands. Use them when starting Claude Code, not inside an active session.
+
+/model switches the underlying model mid-session without restarting. Remember: Teach when relevant to maximize impact rather than Day 1 with everything else.
+Bash mode
+Teach bash mode first: it shifts how developers see the tool
+Your developers will see Claude Code as an extension of their terminal, not a separate system. That shift happens on Day 1 when you teach the ! prefix.
+
+Why this matters for your developers: Without bash mode, asking Claude Code to run a test or build command means Claude decides what to run, the developer waits for output, then pastes it back. With bash mode, developers type the command they already know, it runs immediately, and the output is already in Claude's context. No intermediary step. That efficiency changes the engagement from "let's try this AI tool" to "this fits how I work."
+
+How bash mode works: The ! prefix tells Claude Code to run a shell command directly without interpretation. The command and its output are visible to Claude in the next prompt, so developers can immediately follow up and reference what was printed, with no copy-pasting required.
+
+# Run a command directly — output goes to Claude's context
+! npm test
+
+# Now ask Claude about the output — it already saw it
+Fix the failing tests in the output above
+Shell patterns
+Piping data into Claude Code: the bridge to CI automation
+Shell piping works with Claude Code the same way it works with any Unix command. The patterns here are the building blocks you'll use again in Lesson 2.5 when setting up client CI pipelines.
+
+Use the pipe operator to send any shell output directly to Claude Code as the prompt input. This works for log files, git diffs, PR output, error messages. Anything the shell can produce, Claude Code can consume. Combined with the -p flag for non-interactive use, these become the pipeline patterns in Lesson 2.5.
+
+# Pass a log file to Claude for analysis
+cat error.log | claude
+
+# Pipe a PR diff for a security review
+gh pr diff "$1" | claude -p --append-system-prompt "Review for security vulnerabilities"
+
+# Pass git log output for a summary
+git log --oneline -20 | claude -p "Summarise these commits for a release note"
+Check your understanding
+Terminal patterns in practice
+Four statements about how Claude Code behaves in the terminal. Mark each true or false.
+
+Activity · True or false? Select an answer for each statement.
+"Prefixing a command with ! runs it in the shell and makes the output available to Claude Code in the next prompt."
+True
+False
+"Running /clear undoes any file changes Claude Code made during the session."
+True
+False
+"Pressing Shift+Tab cycles through execution modes, including plan mode, where Claude Code describes what it will do before making any changes."
+True
+False
+"Shell piping works with Claude Code the same way it works with any Unix command: you can pipe output from cat, git, or any other tool directly into claude."
+True
+False
+Key takeaway: The patterns that make Claude Code stick on an engagement are the ones that fit into existing developer habits. Bash mode and shell piping fit into habits developers already have. Context management shortcuts solve the specific problem developers hit in week two. Sequence the enablement accordingly.
+Lesson 3 of 5 complete
+The patterns are in place. Now secure the boundary.
+ 
+You know which shortcuts to teach when, how bash mode and shell piping work, and how to sequence the enablement for a client dev cohort. The shell configuration reference is ready for the Installation Configuration Pack.
+
+Up Next · Lesson 4
+Development containers and sandboxed execution
+When a client's security team asks what Claude Code can access on a developer's machine, the answer depends on which isolation boundary is in place. Lesson 2.4 gives you the controls and the right framing for security conversations.
