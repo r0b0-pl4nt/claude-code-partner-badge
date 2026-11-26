@@ -1,0 +1,154 @@
+CLI install and prerequisites across OS and platforms
+LESSON 1 OF 5 · INSTALLATION AND ENVIRONMENTS
+The install is one command. Getting there is the work.
+Before any developer on a client engagement runs Claude Code, you need to confirm the environment. This lesson covers the pre-kickoff checklist you send to IT, the clean install walk-through, and how to diagnose what breaks when something goes wrong.
+
+Before you begin
+Confirm the environment before install day, not during it
+Setup failures during a client kickoff are almost always avoidable. The 30-Day Activation Plan is explicit: confirm blockers before kickoff, not at it. This means one short call or checklist exchange with the client's IT team in the week prior.
+
+Three things determine whether install day goes cleanly: whether the target OS is supported, whether the client's network can reach Anthropic's endpoints, and how Claude Code will be authenticated for the developer cohort. All three are answerable in advance, so none require a developer to be present. This is a conversation with IT.
+
+Engagement principle
+If install day is the first time you're checking the environment, you're already behind.
+
+Platform support
+macOS, Linux, and Windows are all natively supported. Windows has two paths.
+Most enterprise developer fleets are a mix. Know the Windows options before kickoff so you can advise the client's IT team on which path fits their environment.
+
+macOS
+
+Claude Code runs natively on macOS. The install is the same whether developers are on Apple Silicon (M1+) or Intel machines. No additional setup beyond the curl install command. If the team uses a corporate proxy or custom certificate authority, point NODE_EXTRA_CA_CERTS at the CA certificate file.
+
+Linux
+
+Claude Code runs natively on Linux. Common distributions (Ubuntu 20.04+, Debian 10+, Alpine 3.19+) are all supported. The install is the standard curl command. Like macOS, proxy and certificate handling works through standard environment variables: HTTPS_PROXY (or HTTP_PROXY) and NODE_EXTRA_CA_CERTS.
+
+Windows: Native Path
+
+Claude Code runs natively on Windows without requiring WSL or any Linux layer. Developers launch it from PowerShell or CMD. Native Windows is the simpler path for most teams, requiring no IT provisioning beyond network access. Git for Windows is optional but recommended; without it, Claude Code uses PowerShell as its shell instead of Git Bash. Confirm with IT before kickoff if this trade-off fits the team's workflow.
+
+Windows: WSL Path
+
+WSL (Windows Subsystem for Linux) is the right choice when the team needs Linux toolchains or wants sandboxing unavailable on native Windows. WSL requires IT enablement on managed machines. If developers choose this path, they install Claude Code inside the WSL environment; it then behaves identically to the Linux install. WSL 2 is recommended for performance and isolation.
+
+Installation
+One command. What happens after it runs is the part to prepare for.
+The install script handles the runtime setup. Authentication is the first decision point after it completes.
+
+The install command varies by OS. On macOS and Linux, use the curl installer. On Windows, use PowerShell (recommended) or CMD.
+
+macOS and Linux
+curl -fsSL https://claude.ai/install.sh | bash
+Windows (PowerShell, recommended)
+irm https://claude.ai/install.ps1 | iex
+Windows (CMD)
+curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
+After the install completes, Claude Code opens a terminal prompt asking how the developer wants to authenticate. There are two paths, and the choice shapes your entire cohort setup and whether IT needs to be involved.
+
+Browser-based login
+
+The developer presses Enter at the authentication prompt. A browser window opens to a login page where they sign in with their Anthropic account (Team or Enterprise subscription). The browser returns a session token to the terminal, and Claude Code is ready to use. This is the standard path for interactive developers on a Team or Enterprise plan. No IT involvement required for key management; authentication stays at the individual level.
+
+API key entry
+
+The developer enters an API key directly at the prompt. This is the standard path for headless use, CI pipelines, or automated workflows, covering any scenario where the developer isn't logging in through a browser. API key distribution requires IT coordination: the key must be created in the Anthropic console, distributed securely (environment variable, secrets vault, or secure file), and rotated periodically. For enterprise cohort deployments where multiple developers share a key, confirm this approach with IT before kickoff: it shapes your provisioning workflow.
+
+Common blockers
+Four things that go wrong at install time in enterprise environments
+Each of these can silently fail or produce misleading errors. Confirm them with the client's IT team before the developer cohort attempts setup.
+
+01
+Network access
+Claude Code needs to reach Anthropic's API endpoints. On corporate networks with egress filtering, confirm these are reachable before install day: api.anthropic.com (Claude API), claude.ai and platform.claude.com (authentication), downloads.claude.ai (installer and auto-updater), and raw.githubusercontent.com (changelog). This is the first item to raise with IT. Firewall rules take days to change.
+02
+Proxy and certificate handling
+Claude Code respects standard proxy environment variables. Most enterprise setups (Zscaler, CrowdStrike) work without additional configuration if the root certificate is in the OS trust store. Custom CA and mTLS configurations are available if needed. Full proxy setup is covered in Course 3, Lesson 3.3. Confirm with IT that a proxy is in use and flag it as a setup item for that stage.
+03
+Authentication architecture
+Confirm the authentication method before kickoff: it shapes your entire cohort setup. For interactive developers on a Team or Enterprise plan, browser-based subscription login is the standard path. API keys are appropriate for CI, headless, or automated use. Mixed cohorts can use both. Confirm IT's involvement and approval for whichever path is chosen before install day.
+04
+Windows: native vs. WSL on managed machines
+Native Windows works without IT involvement. If the team opts into WSL for Linux toolchains or sandboxing, managed IT images may not have it enabled by default and enabling it may require an IT ticket. Establish the Windows path early so you know whether IT involvement is needed.
+Scenario · Pre-kickoff checklist
+Your client intake sheet just landed
+You have 30 minutes with the client's platform lead and IT contact next Thursday. You need to decide which blockers to surface first, so you don't waste time and don't miss anything critical.
+
+ 
+Scenario
+Acme Financial · Pre-kickoff IT call
+Your opening question matters. The IT contact has blocked off 30 minutes. You can cover three topics deeply or five shallowly. Click your opening question to see what gets missed.
+
+Your opening move
+The IT lead says:
+"What do we need to know?" You have their attention. What do you ask about first?
+Choose your approach
+Network access: which endpoints does Claude Code need to reach?
+This is the blocker that gates everything. If the firewall blocks the installer, nothing else matters. It's also the hardest to fix on a tight timeline. Firewall rules take days.
+Select
+How many developers need access and on what timeline?
+This shapes rollout planning, which is useful context. But it doesn't surface blockers. It fits any deployment path but doesn't tell you whether the install will actually work.
+Select
+Do you use WSL on your developer machines?
+Useful if the client runs managed Windows images. But it only matters if they choose the WSL path, and you won't know that until you understand their platform mix and network posture.
+Select
+ 
+Verification
+Confirm the install is clean before moving on
+A successful install that hasn't been verified isn't a successful install. It's an assumption.
+
+After installation and authentication, start with a version check to confirm Claude Code is available and responding. Then validate the configuration before the developer cohort onboards.
+
+Version check
+claude --version
+If it returns "command not found," the PATH wasn't updated. Close and reopen the terminal or source your shell profile.
+
+Configuration validation
+claude doctor
+Run this before the developer cohort onboards. It validates the configuration and lists any invalid settings with their source file and field name: the fastest way to catch a misconfigured policy or proxy before it becomes a support call. Use it as a pre-deployment check on a representative machine before rolling out to the full team.
+
+Once Claude Code is running, use the in-session command /status to confirm that proxy and gateway configuration is being applied correctly. Useful when setting up an LLM gateway or corporate proxy for the first time.
+
+Scenario · Troubleshooting the install
+Something breaks during or after install
+You're on a call with a developer. They ran the install command, restarted their terminal, and hit an error. You see the error message. What's your diagnosis?
+
+ 
+Scenario
+Developer onboarding · Install call
+Read the error. Pick the root cause. Your diagnosis determines what happens next: a 5-minute fix or a 30-minute debugging session.
+
+Error #1
+Developer ran the install command on their Mac and got: "curl: (7) Failed to connect to claude.ai port 443: Connection refused"
+Pick your diagnosis
+Network is blocking outbound HTTPS to the installer URL
+The corporate network or firewall is preventing the curl from reaching claude.ai. This is the blocker you should have confirmed with IT before kickoff. Escalate to the IT contact with the hostname that's blocked.
+Select
+The developer's internet connection is down
+Unlikely on a shared developer machine or corporate network. Ask them to ping a public DNS server to check, but this is rarely the issue when others on the same network are unaffected.
+Select
+The install script server is temporarily down
+Possible but rare. If another developer on the same network also hits it, the network is the issue. If it's isolated to one machine, a retry in a few minutes will confirm.
+Select
+ 
+Error #2
+Developer successfully installed Claude Code and authenticated. Now they run claude --version and get: "command not found: claude"
+Pick your diagnosis
+The terminal's PATH wasn't updated after install
+The install script adds claude to PATH, but the shell doesn't reload until the terminal is restarted. Ask them to close and open a new terminal. If they're in the same window the PATH change isn't visible yet.
+Select
+The authentication step failed silently
+If authentication failed, the install would have errored. If they made it to the terminal without an install error, they're authenticated. The issue is almost always PATH.
+Select
+They didn't run the install from their home directory
+The install script doesn't depend on working directory. This is a plausible-sounding guess that sends you debugging in the wrong direction.
+Select
+ 
+Lesson 1 of 5 complete
+The environment is confirmed. Now get it into the IDE.
+ 
+You know which blockers to ask about first, how to walk a developer through a clean install, and how to diagnose the errors that show up most often. The checklist you produce is what you send to IT. It's part of the Installation Configuration Pack you'll complete across this course.
+
+Up Next · Lesson 2
+IDE integrations: VS Code and JetBrains
+Claude Code is not an IDE plugin. It runs in the integrated terminal, which changes how you set it up. Lesson 2.2 covers both VS Code and JetBrains, and walks through the three capabilities worth demonstrating on Day 1.
