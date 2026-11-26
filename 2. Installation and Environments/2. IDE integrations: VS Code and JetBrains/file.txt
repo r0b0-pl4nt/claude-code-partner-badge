@@ -1,0 +1,98 @@
+IDE integrations: VS Code and JetBrains
+LESSON 2 OF 5 · INSTALLATION AND ENVIRONMENTS
+The extension shows. The terminal runs.
+VS Code developers have a native panel via the extension. JetBrains developers use a dedicated plugin and run Claude Code from the integrated terminal. By the end of this lesson you'll know which path to recommend to which developer, and the three IDE capabilities worth demonstrating on Day 1.
+
+The model
+VS Code has a native extension, JetBrains has a dedicated plugin, and both give the full capability.
+This shapes the setup conversation with a client's IT team and which installation path you walk each developer through.
+
+VS Code extension
+
+The VS Code extension (anthropic.claude-code) is the recommended path for VS Code developers. Install it from the VS Code Marketplace (search "Claude Code"), or install directly via vscode:extension/anthropic.claude-code. The extension includes the CLI and adds a dedicated Claude Code panel in the IDE.
+
+Cursor
+
+For Cursor, use the same extension. It's available at cursor:extension/anthropic.claude-code and provides identical functionality to the VS Code version.
+
+JetBrains
+
+For JetBrains (IntelliJ, PyCharm, and the rest of the family), two separate installs are required: first install the Claude Code CLI using the installer from Lesson 2.1, then install the Claude Code plugin from the JetBrains Marketplace. The plugin enables IDE integration (diff viewing, selection context, file references, diagnostics); the CLI provides the Claude Code engine. Both must be installed for the full experience.
+
+Running sessions
+
+Run claude from the integrated terminal to start a session. For a mixed cohort, this means two setup paths: VS Code and Cursor developers install the VS Code extension; JetBrains developers install both the CLI and the plugin.
+
+The framing
+Two entry points, same engine. Match the entry point to the developer's IDE.
+
+What's different
+Three capabilities that change how developers experience Claude Code in the IDE
+These are the moments that shift a developer's perception from "CLI tool" to "integrated into my workflow." Demonstrate all three on Day 1.
+
+01
+Diff viewing
+Code changes appear in the IDE's native diff viewer, not as terminal output. Developers see exactly what Claude Code changed, side by side, in the interface they already use for code review. Configurable via /config.
+02
+Selection context
+The current selection and open tab are automatically shared with Claude Code. A developer can highlight a function, type a prompt, and Claude Code already knows what they're talking about, without needing to specify the file or paste the code.
+03
+File reference shortcuts
+The @app.ts#5-10 pattern pulls specific files and line ranges directly into the conversation. Insert the reference with Option+K (Mac) or Alt+K (Windows/Linux) in the VS Code extension, or Cmd+Option+K (Mac) / Alt+Ctrl+K (Windows/Linux) in JetBrains. Faster than copy-pasting, and keeps the reference precise rather than approximate.
+Supported environments
+VS Code, JetBrains, and the forks question
+Client dev teams use a mix of editors. Know the answer to the forks question before they ask it.
+
+VS Code family
+VS Code and Cursor: install the extension
+The anthropic.claude-code extension is the recommended path for VS Code. Install via the Marketplace (Cmd/Ctrl+Shift+X, search "Claude Code") or use vscode:extension/anthropic.claude-code. For Cursor, use cursor:extension/anthropic.claude-code. Other VS Code forks (e.g., Devin Desktop, Kiro) can install the extension from the Open VSX registry or the Extensions view. The same extension works across all VS Code-compatible editors.
+JetBrains family
+IntelliJ, PyCharm, and other JetBrains IDEs: install the plugin
+Both the CLI and the plugin are required. Install the Claude Code CLI first (using the installer from Lesson 2.1), then install the Claude Code plugin from the JetBrains Marketplace. Run claude from the integrated terminal. The plugin enables diff viewing, selection context, and file reference shortcuts; it does not include the Claude Code engine. Flag to the client's IT team that the integrated terminal must be enabled (on some enterprise configurations it may be restricted by default) and that the plugin requires a full IDE restart after installation.
+Configuration
+IDE-relevant settings live in /config
+Diff viewing defaults to auto, but developers can adjust IDE behavior without leaving the terminal.
+
+Running /config inside a Claude Code session opens the configuration menu. From here, developers can toggle whether code changes open in the IDE diff viewer, adjust verbosity, and set other session-level preferences. This is worth demonstrating early: it gives client developers a sense of agency over the tool, and it surfaces the preference most likely to generate questions ("why is it showing diffs in a separate tab?").
+
+/config opens a tabbed settings interface (not a CLI flag set, but an interactive menu inside the session). Settings can exist at multiple levels: enterprise managed settings (if deployed by the organisation), command-line flags, local project .claude/settings.json, and user-level ~/.claude/settings.json. For enterprise deployments, confirm which level owns the setting and whether users can override it. The settings most relevant to IDE integration are typically at the user level:
+
+Auto-connect to IDE
+
+Automatically connects to an IDE when Claude Code is launched from an external terminal. Toggle: autoConnectIde
+
+Auto-install IDE extension
+
+Installs the IDE extension automatically on first connect. Toggle: autoInstallIdeExtension
+
+Show last response in external editor
+
+Surfaces Claude's last response in a read-only editor panel. Toggle: externalEditorContext
+
+Editor mode
+
+Key binding mode for the input prompt: normal or vim. Toggle: editorMode
+
+For the full list of available settings and their current defaults, direct developers to the Claude Code documentation. The /config menu is interactive and updates with each Claude Code release, so the documentation reflects the most current options.
+
+Engagement scenario
+A developer asks about their editor
+You're running the Claude Code kickoff session. One of the client's developers raises their hand.
+
+Decision · Scenario
+A developer says: "I use Cursor, not VS Code. Most of the team is on VS Code but I switched last year. Will Claude Code work for me, or do I need to go back to VS Code?" What do you tell them?
+A · Cursor isn't supported; they'll need VS Code
+Redirect them to install VS Code for a consistent team experience.
+B · Cursor is supported, same setup as VS Code
+VS Code forks including Cursor are supported. Install the extension at cursor:extension/anthropic.claude-code, same as the VS Code path.
+C · Cursor might work, but check with IT first
+Flag it as unsupported until confirmed, to avoid inconsistencies in the team setup.
+B is correct. Cursor is supported, with the Claude Code extension available at cursor:extension/anthropic.claude-code. The developer doesn't need to change editors or settle for a second-class setup. The correct answer here also matters for team dynamics: routing one developer to a different configuration creates friction and signals uncertainty. When the answer is "yes, it works," say so directly. You can add that they'll get the same panel experience the VS Code developers get.
+Lesson 2 of 5 complete
+The IDE integration is set. Now learn the terminal habits that make it stick.
+ 
+You know the two integration paths (the VS Code extension and the JetBrains plugin) and which clients land where. You have the three capabilities worth demonstrating on Day 1: diff viewing, selection context, and file reference shortcuts.
+
+Up Next · Lesson 3
+Terminal patterns and shell setup
+The shortcuts and shell patterns that determine whether a client dev team reaches for Claude Code habitually, or treats it as an occasional tool.
