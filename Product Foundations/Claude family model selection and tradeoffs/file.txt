@@ -1,0 +1,91 @@
+Claude family model selection and tradeoffs
+LESSON 2 OF 3 · PRODUCT FOUNDATIONS
+Three models, one recommendation, and when to deviate
+By the end of this lesson, you can recommend a model for a new Claude Code deployment and defend that choice against cost, speed, and capability objections.
+
+The model family
+Haiku is cheapest, Opus is sharpest, and Sonnet is where most production work lands.
+01
+Claude Haiku 4.5
+Lowest cost tier · 200k context
+Cost
+ 
+Speed
+ 
+Depth
+ 
+Fastest and cheapest. Use when volume and speed matter more than reasoning depth.
+Tap to expand →
+02
+Claude Sonnet 4.6
+Mid-range cost · 1M context
+Cost
+ 
+Speed
+ 
+Depth
+ 
+The production default for most Claude Code work. Best balance of speed and intelligence.
+Tap to expand →
+03
+Claude Opus 4.8
+Highest cost tier · 1M context
+Cost
+ 
+Speed
+ 
+Depth
+ 
+Sharpest reasoning. Use for complex, long-horizon, high-autonomy work where accuracy outweighs cost.
+Tap to expand →
+Bars show relative position across the family, not exact figures. Verify current rates at anthropic.com/pricing before any client conversation.
+The decision
+Start with Sonnet, move to Opus for sustained reasoning tasks, and reach for Haiku when volume and cost dominate.
+Most pilots start with Sonnet and expand from there. High-volume or high-autonomy use cases are where the model mix gets more deliberate.
+
+Start fast (Haiku path)
+High-volume or time-sensitive
+Sub-agent pipelines, CI/CD scripting, rapid prototyping, cost-sensitive deployments. When throughput and latency matter more than reasoning depth.
+Start capable (Opus path)
+Complex or long-horizon tasks
+Autonomous refactoring runs, multi-hour tasks, work where getting it right the first time outweighs cost. Sonnet handles everything in between.
+The effort lever
+Before you switch models, try adjusting effort first. It's a cheaper move.
+The effort parameter tunes reasoning depth within a tier without switching models. On Opus 4.8, xhigh is available and is the recommended setting for coding and agentic work, often a better first lever than paying for a higher tier. On Sonnet 4.6, the parameter goes up to high, a useful lever before committing to Opus pricing. Writing unit tests for a 20-line utility function produces the same result at default effort as at extended thinking; a multi-file refactor with cross-module dependency analysis is where higher effort produces materially better output.
+
+To remember
+Model selection is an architecture decision; effort tuning is a performance lever. Know which you're reaching for before making a recommendation.
+
+Try the lever · effort on Opus 4.8
+Default
+High
+xhigh
+Reasoning depth
+Relative cost
+xhigh effort: the recommended setting for coding and agentic work on Opus 4.8. You get the deepest reasoning the tier offers, often a better first move than paying for a higher model.
+
+Decision · Scenario
+Put the framework to work.
+Decision · Scenario
+Your client is rolling out Claude Code for 50 developers doing routine feature work (writing functions, generating tests, updating documentation). A small group will also run overnight autonomous refactoring tasks across legacy modules. What's your model recommendation?
+
+A · Haiku 4.5 for all tasks
+Cost-efficient at scale, keeping the bill low across 50 developers.
+B · Opus 4.8 for all tasks
+Ensures the best output quality across every type of work.
+C · Sonnet 4.6 default; Opus 4.8 for overnight runs
+Match the model to the task type.
+D · Sonnet 4.6 for all tasks
+One model across the entire team keeps configuration simple.
+Haiku works for simple, high-volume tasks, but complex refactoring, architectural review, and multi-step agentic tasks all require Sonnet or Opus. Using Haiku for everything degrades quality on the tasks that matter most to the client. The overnight autonomous runs in this scenario specifically need reasoning depth that Haiku cannot deliver reliably.
+Opus is the right call for the overnight autonomous runs, but running 50 developers on Opus for routine feature work adds roughly 65% cost for no meaningful quality gain. Sonnet handles function writing, test generation, and documentation updates at a comparable quality level and at a fraction of the cost. Match the model to the work, not to a single ceiling.
+Correct. Sonnet 4.6 handles routine feature work well at a reasonable cost. Opus covers the overnight autonomous runs where task complexity and duration justify the premium. This tiered approach gives the client cost efficiency on high-volume daily work while preserving reasoning depth for the tasks that need it.
+Sonnet for all tasks is a safe default, but you're overpaying for high-volume scripted tasks that Haiku handles just as well. Haiku handles simple, high-volume tasks like docstring generation or inline completions at lower cost and lower latency, with no meaningful quality penalty for those use cases. Most enterprise teams do better with a tiered model than one model for everything.
+Lesson 2 of 3 complete
+You have a model recommendation. Now choose where to run it.
+ 
+You can now map a client's workload profile to a model recommendation and explain the tradeoffs between cost, latency, and reasoning depth.
+
+Up next · Lesson 3
+Platform options at a glance
+Seven deployment paths: how to match the right one to a client's cloud posture, seat type, and governance requirements.
