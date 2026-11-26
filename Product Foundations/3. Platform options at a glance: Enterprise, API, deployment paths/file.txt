@@ -1,0 +1,113 @@
+Platform options at a glance: Enterprise, API, deployment paths
+LESSON 3 OF 3 · PRODUCT FOUNDATIONS
+Seven paths to Claude Code, one right fit for your client
+By the end of this lesson, you can map a client's cloud commitments, governance requirements, and feature needs to the right deployment option and explain why you're not recommending the others.
+
+The seven paths: Claude.ai Teams, Claude.ai Enterprise, Amazon Bedrock, Google Cloud Vertex AI, Microsoft Azure AI Foundry, Anthropic API, and Anthropic Console.
+
+Three categories
+Full feature set, cloud-native, or API-only. Which category fits determines everything else.
+01
+Claude-managed (Teams + Enterprise)
+Full feature set, includes Claude on web and mobile, centralized billing, no infrastructure setup. Best for most GSI-led activations.
+Choose when: the client wants the fastest path to value and has no hard requirement to route through their own cloud. This is your default recommendation unless something rules it out.
+02
+Cloud-native (Bedrock, Vertex, Foundry)
+Routes through the client's existing cloud provider. IAM integration, regional data controls, billing through cloud. No Claude.ai web surface.
+Choose when: the client has existing cloud commitments or data-residency rules that force processing into a region they control. Flag the governance gap versus Enterprise.
+03
+API / Console
+Individual developers, API key auth, pay-as-you-go. No enterprise controls. Not the right path for a managed rollout.
+Choose when: a single developer or a prototype needs quick access. For a 200-seat governed rollout, this is the wrong category, name it only to rule it out.
+Try the framework
+Answer three questions the way you would on a discovery call. See where the path lands.
+Deployment picker
+This mirrors the real decision: cloud posture first, then governance, then feature surface. Pick an answer for each.
+
+1
+Does the client require processing to stay inside a cloud region they control (residency, sovereign, existing commitment)?
+Yes — AWS
+Yes — GCP
+Yes — Azure
+No hard requirement
+2
+Is the security team asking for SSO, audit logs, managed settings, or Compliance API?
+Yes, governance matters
+No, keep it light
+3
+What's the scope of the rollout?
+A team or whole org
+A single dev or prototype
+Recommended path
+—
+Reset
+A guide, not a contract. Real deployments weigh procurement path, existing licensing, and security sign-off alongside these three questions.
+
+Enterprise vs Teams
+Enterprise isn't more seats. It's the controls tier.
+Teams
+For getting started
+Usage-based billing plus a per-seat subscription fee. Verify current pricing at anthropic.com/pricing. Team management, admin tools, basic SSO. A starting tier, not the right fit for most enterprise rollouts.
+Enterprise
+For governed rollouts
+SSO with domain capture, SCIM provisioning, RBAC, Compliance API, and managed policy settings. If the client's security team is asking about audit logs or managed settings, this is the tier.
+For most GSI-led activations, recommend Enterprise. If a client asks about SSO, managed settings, or audit logs, Teams won't satisfy the requirement.
+
+Cloud-native path
+Route through the client's cloud when they have existing commitments or data residency requirements.
+Bedrock for AWS-first clients, Vertex for GCP, Foundry for Azure. The trade-off: billing through their cloud, IAM integration, regional data controls, but no Claude.ai web surface, no managed settings, no Compliance API. An LLM Gateway (a middleware layer that routes model API calls through corporate network controls, adding logging, filtering, and policy enforcement before requests reach the model provider) can sit between Claude Code and any cloud provider to add centralized auth, usage tracking, and rate limiting on top.
+
+To remember
+Cloud-native routing satisfies an existing commitment, not a security requirement. The governance gap compared to Enterprise is real and worth flagging to the client.
+
+Seat types
+Usage-based Claude Code access requires the right seat type. Flag this early in procurement.
+Standard
+Chat only
+No Claude Code access. Most common default seat. Confirm this isn't what the client is buying before kickoff.
+Watch for: a client who assumes "we have Claude" means developers can run Claude Code. A Standard seat does not include it, this is the most common mismatch.
+Chat + Code
+Includes Claude Code
+The minimum tier for Claude Code access. Confirm this is in the procurement scope before the engagement starts.
+Watch for: the gap between what was demoed and what was purchased. If the pilot used Code, the contract must include this tier or higher.
+Claude Enterprise
+Full enterprise tier
+Includes Claude Code, all enterprise controls, and Compliance API access. The right seat for governed rollouts.
+Watch for: security teams asking about audit logs or managed settings, that requirement points here, not at the lower tiers.
+Procurement flag
+Confirm before kickoff
+Seat type mismatches are a common cause of activation delays. Add this to your pre-kickoff checklist.
+Watch for: procurement closing on the wrong tier weeks before kickoff. Catching it early is far cheaper than a mid-engagement contract amendment.
+These seat names reflect the usage-based pricing model. Clients on legacy seat-based plans use Standard and Premium seat types instead. Confirm which model the client is on before procurement. It affects both naming and what each seat includes.
+
+Platform selection
+Apply the framework to a real scenario.
+Decision · Scenario
+Your client is a financial services firm. They are heavily invested in AWS, their security policy requires all data processing to stay within approved AWS regions, and their IT team manages developer devices with Intune. They want a Claude Code rollout for 200 developers.
+
+A · Claude for Enterprise direct
+Fullest feature set, SSO, Compliance API. The standard GSI recommendation.
+B · Amazon Bedrock with LLM Gateway
+Satisfies the AWS-native and regional data processing requirements.
+C · Google Vertex AI
+Strong enterprise integration and regional data options.
+D · Anthropic Console
+Simple setup, API key auth, no infrastructure required.
+Why not Enterprise (Option A): Claude.ai Enterprise is a SaaS product. Anthropic's infrastructure determines where processing occurs, and the client has no control over which region handles their data. Clients that need explicit regional data boundaries (GDPR, sovereign cloud, data residency contracts) require a cloud provider deployment (Bedrock, Vertex, or Azure) where they choose and control the region. This is the most common reason enterprise clients choose cloud provider deployments over managed SaaS.
+
+Why Bedrock (Option B): Bedrock satisfies the regional data processing requirement and routes through the client's existing AWS infrastructure and billing. Add an LLM Gateway for centralized auth and usage tracking. Be explicit about the trade-off: they lose the Claude.ai web surface and Enterprise admin features. Assess with the client's security team whether that gap needs to be addressed separately. Claude for Enterprise is the right default when cloud-native routing is not a requirement.
+
+On Intune: Intune is relevant to how Claude Code gets distributed to developer endpoints, not to the deployment architecture decision. That question is driven by data residency requirements, existing cloud commitments, and procurement path.
+Practice
+ 
+Try this
+You've covered what Claude Code is, how to match workloads to the right model tier, and which deployment path fits which client profile. A good way to put it to work: take three client scenarios with different cloud postures, automation requirements, and team sizes, and see if you can pair each one with a deployment path and model. If you can explain the deciding factor for each in a sentence, you're ready to make that call in the room.
+
+Product Foundations · Complete
+You can frame Claude Code. Now go deploy it.
+ 
+You can explain what Claude Code is, recommend the right model for a workload profile, and map a client's cloud posture to the right deployment path.
+
+Next course
+Installation and Environments
+The frameworks from this course only matter once Claude Code is actually running. Installation and Environments covers OS-specific installation, IDE integration, authentication, and the security boundaries you'll need to configure before the first developer session.
