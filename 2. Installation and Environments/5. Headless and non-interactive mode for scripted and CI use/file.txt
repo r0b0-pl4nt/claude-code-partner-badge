@@ -1,0 +1,154 @@
+Headless and non-interactive mode for scripted and CI use
+LESSON 5 OF 5 · INSTALLATION AND ENVIRONMENTS
+In the pipeline. No developer in the loop.
+Once a client team has Claude Code running interactively, the next question is always the same: can we automate this? By the end of this lesson you'll know the flags, the patterns, and the GitHub Actions integration, and be ready to design a headless Claude Code workflow for a real engagement.
+
+The concept
+The -p flag is the on/off switch for pipeline use
+Headless mode is not a separate product or a different tool. It's a flag. That simplicity is worth emphasising to a client team who assumes a CI integration means a new deployment to manage.
+
+Adding -p to the Claude Code command makes it run non-interactively: it takes the prompt from the command line argument, executes, and exits. No waiting for input, no interactive session. This is what makes Claude Code composable with shell scripts, CI pipelines, pre-commit hooks, and any automated workflow. The same binary, the same authentication, the same model, just invoked without a human in the loop.
+
+Key flags
+Five flags that shape every headless workflow
+Most headless Claude Code commands on an engagement use some combination of these five. Know what each one controls and when to reach for it.
+
+1
+-p: Non-interactive mode
+Runs Claude Code without an interactive session, making it required for any pipeline use. Takes the prompt as a string argument: claude -p "Your prompt here". Use this any time Claude Code runs in a script or automated workflow.
+2
+--allowedTools: Tool restriction
+Restricts which tools Claude Code can use in this execution. Pass a comma-separated list: --allowedTools "Bash,Read,Edit". Use this when the pipeline should be limited: a code review that reads files but doesn't execute shell commands, for example.
+3
+--append-system-prompt: Pipeline instructions
+Injects a system-level instruction that applies to this execution. Use this to set the context for an automated task: "this is a security review", "always output in JSON", "focus only on the changed files". It's how you specialise the same tool for different pipeline stages.
+4
+--output-format json: Structured output
+Outputs Claude Code's response as JSON rather than prose. Essential when the output feeds into another system: a dashboard, a ticket, a database. Specify the expected schema in the prompt itself: "Output a JSON array where each item has 'path' (string) and 'method' (string)." For workflows requiring strict schema conformance, implement retry logic and validate output format in your pipeline. Test schema compliance in a controlled run before deploying to production.
+5
+--bare: Reproducible CI mode
+Disables local hooks, skills, plugins, MCP servers, auto memory, and CLAUDE.md loading for this execution. Use when you need consistent behaviour across environments: the same command produces the same result regardless of what's configured on any individual developer's machine. Combine with -p for fully isolated, reproducible CI workflows: claude -p --bare 'Your prompt here'.
+In practice
+Three patterns to show a client team, each from a real use case
+These patterns come directly from the source material. They're functional, not illustrative: show them running, not just described.
+
+01
+Automated code review
+Pipes a PR diff into Claude Code with a security review system prompt. The output is JSON, suitable for posting back to the PR or feeding into a dashboard.
+02
+Test-and-fix loop
+Runs the test suite and instructs Claude Code to fix failures. Limits tool access to the operations needed, with no extraneous permissions. Stops after the test run regardless of outcome.
+03
+Structured extraction
+Extracts structured information from a codebase (API endpoints, dependencies, configuration values) and outputs it as JSON with a specified structure that downstream tooling can parse directly. Schema is defined in the prompt.
+# Pattern 1: Automated code review on a PR
+gh pr diff "$1" | claude -p \
+  --append-system-prompt "Review for security vulnerabilities" \
+  --output-format json
+
+# Pattern 2: Run tests and fix failures
+claude -p "Run test suite, fix any failures" \
+  --allowedTools "Bash,Read,Edit"
+
+# Pattern 3: Structured output — list API endpoints
+claude -p 'List all API endpoints in this codebase. Output a JSON array where each item has "path" (string) and "method" (string).' \
+  --output-format json
+CI/CD integration
+GitHub Actions: the setup is two steps and a trigger
+The client's development team almost certainly already uses GitHub Actions. Integrating Claude Code is an addition to their existing workflow, not a replacement.
+
+To set up Claude Code in GitHub Actions, run /install-github-app from an active Claude Code session. This installs the GitHub app to the client's organisation. Once installed, developers can trigger Claude Code on any issue or PR by tagging @claude in a comment. Claude Code reads the context and responds, with no manual pipeline configuration required for the basic case.
+
+For custom pipeline workflows
+
+Custom workflows automate Claude Code without waiting for a developer to tag @claude. A custom workflow YAML has four building blocks:
+
+01 Trigger
+On every pull request, on schedule, or on a custom event
+02 Environment
+ANTHROPIC_API_KEY injected from GitHub Secrets
+03 Claude command
+Flags for task, output format: -p (non-interactive), --output-format json, --allowedTools
+04 Output handling
+Post results as PR comment, save to file, or pipe to another action
+Unlike the basic @claude trigger where Claude Code reads PR context and responds in prose, custom workflows define the exact task, the structure of the response, and where the response goes.
+
+Headless auth
+Authentication in CI is a secrets management question, not a Claude Code question
+The mechanism is the same as any API credential in a pipeline. The configuration varies by CI platform.
+
+Headless Claude Code authenticates via ANTHROPIC_API_KEY, without a browser or interactive login. In GitHub Actions, this means adding the key as a repository or organisation secret and referencing it in the workflow YAML with ${{ secrets.ANTHROPIC_API_KEY }}. The same pattern applies in GitLab CI (CI/CD variables), Jenkins (credentials store), and other platforms. The client's DevOps team will recognise this pattern immediately: it's exactly how they handle any other API key in their pipelines.
+
+Engagement scenario
+Designing the right pipeline command
+A client's engineering lead is designing an automated PR review workflow.
+
+Decision · Scenario
+The lead says: "We want Claude Code to review every PR automatically and output a structured JSON report that our internal security dashboard can consume. What's the right combination of flags?"
+A · -p only
+The -p flag handles both the non-interactive execution and the output format.
+B · --json-schema only
+The schema flag is enough to make Claude Code output structured JSON.
+C · -p + --output-format json + schema in the prompt
+Non-interactive execution and JSON output format as flags, with the schema defined in the prompt text itself.
+D · -p + --allowedTools
+Headless mode plus tool restriction handles the structured output requirement.
+C is correct. Two flags, each doing a distinct job, plus prompt design: -p makes it non-interactive (runs without waiting for input); --output-format json tells Claude Code to output JSON rather than prose; and the expected structure (fields, types, nesting) is specified in the prompt itself. Schema guidance in the prompt shapes the output, but for production pipelines, build in validation and retry logic; don't assume the shape will always match exactly. Using --output-format json alone without specifying structure in the prompt leaves the JSON shape undefined: the dashboard won't know what to parse.
+Practice
+Install and run across three environments
+You've learned the pieces. Now assemble them.
+
+Environment 1: CLI (Local)
+
+From Lesson 2.1, you know the install sequence and can verify it with claude --version. Run this first.
+
+Environment 2: IDE Integration
+
+From Lesson 2.2, install the IDE extension (VS Code or JetBrains). Open a small file, ask Claude Code a question about it, and verify the response appears inline. You're not running a headless command here; you're checking that the IDE integration works as an interactive tool.
+
+Environment 3: Dev Container
+
+This requires setup not covered in Course 2. You'll need to: (1) create a devcontainer.json or Docker config that includes Claude Code, (2) start the container, and (3) verify claude --version works inside it. Refer to your container platform's documentation and the Claude Code CLI reference for installation steps. The isolation concepts from Lesson 2.4 apply here: the container is the sandbox.
+
+Headless Script: End-to-End Run
+
+From Lesson 2.5, you know the -p flag runs Claude Code non-interactively. Create a simple test script:
+
+Shell
+echo "What does this function do?" | claude -p --stdin --output-format text
+Run this from your CLI environment (Environment 1). What you're verifying: (1) the prompt reaches Claude Code, (2) Claude Code runs without waiting for input (-p flag), (3) output appears. Then run the same command from inside your dev container (Environment 3). Success is when both produce output.
+
+Success Criteria
+
+claude --version returns a version string in all three environments.
+IDE extension loads without errors and responds to a simple query.
+The headless -p command produces output in both CLI and container contexts.
+What you'll learn by doing this: Why dev containers are a client advantage (reproducible, isolated, version-locked), what "headless" actually means in practice (non-interactive execution that powers CI pipelines), and where the gaps are in your environment (usually authentication in containers or shell context).
+
+ 
+Course artifact · Lesson 5 contribution
+Installation Configuration Pack
+Container spec section
+This lesson contributes the container spec section — the dev container definition and headless pipeline configuration the client's DevOps team needs to reproduce the environment in CI.
+
+1.
+Record the devcontainer feature reference and any version-pinning flags. If the engagement requires a controlled update cycle, document the override that disables automatic updates.
+2.
+Document the headless invocation pattern: the non-interactive flag, output format, and the pipe-in source the team will use (git log, test output, build artifacts).
+3.
+Note the CI integration path: the GitHub Actions trigger, workflow file location, and the @claude command pattern developers will use to invoke it from a pull request.
+Hand these two sections to the client's IT and DevOps leads — together they cover every requirement that needs to be resolved before a Claude Code rollout can begin.
+
+Practice
+ 
+Try this
+You've covered every environment Claude Code runs in — local CLI, IDE extensions, dev containers, and headless pipelines. Before moving on: install Claude Code in all three environments and run a headless script end-to-end. Capture the output. That single exercise confirms your setup is clean, your flags are right, and you can walk a client developer through the same process without hesitation.
+
+Installation and Environments · Complete
+The environment is ready. Now configure it for the engagement.
+ 
+You can now confirm pre-install requirements with a client's IT team, set up Claude Code across VS Code and JetBrains, teach the terminal patterns that drive adoption, frame the sandbox controls in a security conversation, and design a headless pipeline for a client's CI workflow. The Installation Configuration Pack is your leave-behind for the DevOps team.
+
+Next Course
+Deployment Architecture
+Course 3 covers how Claude Code fits into a client's broader architecture — deployment paths, network topology, and the design decisions that separate a working pilot from an enterprise-grade rollout. The environment foundation you've built here is what Course 3 builds on.
